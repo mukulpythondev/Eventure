@@ -1,6 +1,5 @@
 // app/layout.tsx
 // import "@/styles/globals.css";
-import { ThemeProvider } from "next-themes";
 import Footer from "@/components/shared/Footer";
 import Header from "@/components/shared/Header";
 

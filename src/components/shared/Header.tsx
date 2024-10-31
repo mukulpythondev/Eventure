@@ -15,7 +15,7 @@ const Header = () => {
 
   // Determine button text and link based on current path
   const isSignUpPage = pathname === "/auth/sign-up";
-  const isSignInPage = pathname === "/auth/sign-in";
+  // const isSignInPage = pathname === "/auth/sign-in";
   const authButtonText = isSignUpPage ? "Sign In" : "Sign Up";
   const authButtonLink = isSignUpPage ? "/auth/sign-in" : "/auth/sign-up";
 
