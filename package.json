@@ -22,10 +22,12 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-toggle-dark-mode": "^1.1.1",
+    "svix": "^1.40.0",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@types/mongoose": "^5.11.97",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
