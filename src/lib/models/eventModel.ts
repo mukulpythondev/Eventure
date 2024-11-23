@@ -1,30 +1,30 @@
 import { model, models, Schema } from "mongoose";
-interface IEvent extends Document {
-  _id:String,
-  title: string;
-  description: string;
-  eventImage: string;
-  startDateTime: Date;
-  endDateTime: Date;
-  location: string;
-  isPaid: boolean;
-  price: number;
-  totalSeats: number;
-  bookedSeats: number;
-  eventType: 'online' | 'offline';
-  qrCode?: string;
-  host: Schema.Types.ObjectId;
-  category: Schema.Types.ObjectId[],
-  attendees: Schema.Types.ObjectId[];
-  createdAt: Date;
-}
+// interface IEvent extends Document {
+//   _id:string,
+//   title: string;
+//   description: string;
+//   eventImage: string;
+//   startDateTime: Date;
+//   endDateTime: Date;
+//   location?: string;
+//   isPaid: boolean;
+//   price: number;
+//   totalSeats: number;
+//   bookedSeats: number;
+//   eventType: 'online' | 'offline';
+//   qrCode?: string;
+//   host: Schema.Types.ObjectId;
+//   category: Schema.Types.ObjectId[],
+//   attendees: Schema.Types.ObjectId[];
+//   createdAt: Date;
+// }
 
 const eventSchema = new Schema({
   title: { type: String, required: true },
   description: { type: String, required: true },
   eventImage: { type: String, required: true },
-  startDateTime: { type: Date, required: true },
-  endDateTime: { type: Date, required: true },
+  startDateTime: { type: Date, required: true , default:Date.now},
+  endDateTime: { type: Date, required: true ,default:Date.now},
   location: { type: String, required: true },
   isPaid: { type: Boolean, default: false }, // Indicates if the event is paid
   price: { type: Number, default: 0 }, // Price of the event if it's paid
@@ -39,6 +39,6 @@ const eventSchema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const Event = models.Event || model<IEvent>('Event', eventSchema);
+const Event = models.Event || model('Event', eventSchema);
 
 export default Event;
