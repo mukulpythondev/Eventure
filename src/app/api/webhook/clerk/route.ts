@@ -3,7 +3,11 @@ import { headers } from 'next/headers';
 import { clerkClient, WebhookEvent } from '@clerk/nextjs/server';
 import { createUser, deleteUser, updateUser } from '@/lib/actions/user.actions';
 import { NextResponse } from 'next/server';
+import { CreateUserParams } from '@/types';
 
+interface DBUser extends CreateUserParams {
+  _id: string;
+}
 export async function POST(req: Request) {
   const SIGNING_SECRET = process.env.SIGNING_SECRET;
 
@@ -58,14 +62,16 @@ export async function POST(req: Request) {
         userName: username || '',
       };
 
-      const newUser = await createUser(user);
-      // if (newUser) {
-      //   await clerkClient.users.updateUserMetadata(id, {
-      //     publicMetadata: {
-      //       userId: newUser._id,
-      //     },
-      //   });
-      // }
+      const newUser = await createUser(user) as DBUser;
+      if (newUser) {
+        const client = await clerkClient()
+
+        await client.users.updateUserMetadata(id, {
+          publicMetadata: {
+            userId: newUser._id.toString(),
+          },
+        });
+      }
 
       return NextResponse.json({ message: 'User created successfully', user: newUser });
     }
