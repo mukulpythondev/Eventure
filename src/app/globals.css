@@ -2,9 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Custom styles to change the date input icon color */
+.date-picker-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+.date-picker-input {
+  color: white;
+}
+
+.date-picker-input::-webkit-input-placeholder {
+  color: white;
+}
+
 
 @layer base {
   :root {
