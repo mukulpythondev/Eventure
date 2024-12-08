@@ -20,6 +20,11 @@ html, body {
 .date-picker-input::-webkit-input-placeholder {
   color: white;
 }
+input::file-selector-button {
+  font-weight: bold;
+  color: white;
+  border: 2px solid white;
+}
 
 
 @layer base {

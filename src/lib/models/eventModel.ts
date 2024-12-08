@@ -1,23 +1,24 @@
 import { model, models, Schema } from "mongoose";
-// interface IEvent extends Document {
-//   _id:string,
-//   title: string;
-//   description: string;
-//   eventImage: string;
-//   startDateTime: Date;
-//   endDateTime: Date;
-//   location?: string;
-//   isPaid: boolean;
-//   price: number;
-//   totalSeats: number;
-//   bookedSeats: number;
-//   eventType: 'online' | 'offline';
-//   qrCode?: string;
-//   host: Schema.Types.ObjectId;
-//   category: Schema.Types.ObjectId[],
-//   attendees: Schema.Types.ObjectId[];
-//   createdAt: Date;
-// }
+interface IEvent extends Document {
+  _id:string,
+  title: string;
+  description: string;
+  eventImage: string;
+  startDateTime: Date;
+  endDateTime: Date;
+  venue?: string;
+  isPaid: boolean;
+  price: number;
+  totalSeats: number;
+  bookedSeats: number;
+  eventType: 'online' | 'offline';
+  qrCode?: string;
+  host: Schema.Types.ObjectId;
+  category: string,
+  attendees: Schema.Types.ObjectId[];
+  createdAt: Date;
+  hostEmail:string
+}
 
 const eventSchema = new Schema({
   title: { type: String, required: true },
@@ -25,7 +26,7 @@ const eventSchema = new Schema({
   eventImage: { type: String, required: true },
   startDateTime: { type: Date, required: true , default:Date.now},
   endDateTime: { type: Date, required: true ,default:Date.now},
-  location: { type: String, required: true },
+  venue: { type: String, required: true },
   isPaid: { type: Boolean, default: false }, // Indicates if the event is paid
   price: { type: Number, default: 0 }, // Price of the event if it's paid
   totalSeats: { type: Number, required: true },
@@ -33,12 +34,13 @@ const eventSchema = new Schema({
   eventType: { type: String, enum: ['online', 'offline'], required: true },
   qrCode: { type: String }, // Store QR code data or URL
   host: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  // category: { type:String, enum:["meetup", "seminar", "workshop", "webinar", "exhibition"]},
-  category: { type: Schema.Types.ObjectId, ref: 'Category' },
+  category: { type:String, enum:["meetup", "seminar", "workshop", "webinar", "exhibition","masterclass"]},
+  // category: { type:String, required:true },
   attendees: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Users who have RSVPed
   createdAt: { type: Date, default: Date.now },
+  hostEmail: {type: String, required: true}
 });
 
-const Event = models.Event || model('Event', eventSchema);
+const Event = models.Event || model<IEvent>('Event', eventSchema);
 
 export default Event;
