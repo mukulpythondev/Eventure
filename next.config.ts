@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['images.lumacdn.com'], // Add the external domain
+    domains: ['images.lumacdn.com','res.cloudinary.com'], // Add the external domain
   },
 };
 

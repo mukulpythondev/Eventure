@@ -1,34 +1,34 @@
 "use client"; // Add this line to indicate this is client-side code
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Spotlight } from "@/components/ui/spotlight";
 import EventCard from "@/components/shared/EventCard"; // Assuming you have an EventCard component
+import { getAllEvents } from "@/lib/actions/events.action";
+import { formatDateTime } from "@/lib/utils";
 
-const page = () => {
+const Page = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  
-  const eventData = [
-    {
-      title: "Tech Conference 2024",
-      description: "A full day of workshops and networking for developers.",
-      date: "July 15, 2024",
-      location: "New York City, NY",
-      category: "Technology",
-      imageUrl: "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,background=white,quality=75,width=400,height=400/event-covers/yn/5c7cb3d5-c34b-49b8-9c1f-022fc44680b8",
-    },
-    {
-      title: "Design Summit",
-      description: "Join us for a day of design discussions and networking.",
-      date: "August 20, 2024",
-      location: "San Francisco, CA",
-      category: "Design",
-      imageUrl: "https://images.lumacdn.com/cdn-cgi/image/format=auto,fit=cover,dpr=1,background=white,quality=75,width=400,height=400/event-covers/9d/2ef4ad3e-e5ea-4e47-bd73-f0b16d10b518",
-    },
-    // More events
-  ];
+  const [allEvents, setAllEvents] = useState([]);
+  const [loading, setLoading] = useState(true); // State for loader
 
-  const filteredEvents = eventData.filter((event) => {
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true); // Show loader
+        const events = await getAllEvents({query:searchTerm,category:selectedCategory, page:1});
+        console.log(events)
+        setAllEvents(events.data || []); // Update events
+      } catch (error) {
+        console.error("Error fetching events:", error);
+      } finally {
+        setLoading(false); // Hide loader
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const filteredEvents = allEvents.filter((event) => {
     return (
       (event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
       event.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
@@ -51,63 +51,73 @@ const page = () => {
       </div>
 
       {/* Search and Category Filters */}
-     <div className="h-full flex-col bg-black/[0.96] min-h-[55vh]" >
-     <div className="max-w-7xl mx-auto p-4 flex flex-col items-center ">
-        <div className="flex w-full max-w-2xl space-x-4 mb-4">
-          <input
-            type="text"
-            placeholder="Search events..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
+      <div className="h-full flex-col bg-black/[0.96] min-h-[55vh]">
+        <div className="max-w-7xl mx-auto p-4 flex flex-col items-center">
+          <div className="flex w-full max-w-2xl space-x-4 mb-4">
+            <input
+              type="text"
+              placeholder="Search events..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+          </div>
+
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setSelectedCategory("Technology")}
+              className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
+                selectedCategory === "Technology" ? "bg-cyan-700" : "bg-cyan-500"
+              }`}
+            >
+              Technology
+            </button>
+            <button
+              onClick={() => setSelectedCategory("Design")}
+              className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
+                selectedCategory === "Design" ? "bg-cyan-700" : "bg-cyan-500"
+              }`}
+            >
+              Design
+            </button>
+            <button
+              onClick={() => setSelectedCategory("")}
+              className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
+                selectedCategory === "" ? "bg-cyan-700" : "bg-cyan-500"
+              }`}
+            >
+              All Categories
+            </button>
+          </div>
         </div>
 
-        <div className="flex space-x-4">
-          <button
-            onClick={() => setSelectedCategory("Technology")}
-            className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
-              selectedCategory === "Technology" ? "bg-cyan-700" : "bg-cyan-500"
-            }`}
-          >
-            Technology
-          </button>
-          <button
-            onClick={() => setSelectedCategory("Design")}
-            className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
-              selectedCategory === "Design" ? "bg-cyan-700" : "bg-cyan-500"
-            }`}
-          >
-            Design
-          </button>
-          <button
-            onClick={() => setSelectedCategory("")}
-            className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
-              selectedCategory === "" ? "bg-cyan-700" : "bg-cyan-500"
-            }`}
-          >
-            All Categories
-          </button>
+        {/* Event Cards */}
+        <div className="max-w-7xl mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {loading ? (
+            <div className="col-span-full flex justify-center items-center">
+              <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 border-t-transparent rounded-full text-cyan-500" role="status">
+                <span className="sr-only">Loading...</span>
+              </div>
+            </div>
+          ) : (
+            filteredEvents.map((event, index) => (
+              <EventCard
+                key={index}
+                title={event.title}
+                description={event.description}
+                startdate={formatDateTime(event.startDateTime).dateTime}
+                enddate={formatDateTime(event.endDateTime).dateTime}
+                venue={event.venue}
+                category={event.category}
+                imageUrl={event.eventImage}
+                _id={event._id}
+              />
+            ))
+          )}
         </div>
       </div>
-
-      {/* Event Cards */}
-      <div className="max-w-7xl mx-auto p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        {filteredEvents.map((event, index) => (
-          <EventCard
-            key={index}
-            title={event.title}
-            description={event.description}
-            date={event.date}
-            location={event.location}
-            category={event.category}
-            imageUrl={event.imageUrl}
-          />
-        ))}
-      </div>
-     </div>
     </div>
   );
 };
 
-export default page;
+export default Page;
