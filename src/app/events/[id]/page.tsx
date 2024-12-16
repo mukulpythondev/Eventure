@@ -1,10 +1,11 @@
 import { getEventById } from '@/lib/actions/events.action';
 import { formatDateTime } from '@/lib/utils';
-import { SearchParamProps } from '@/types';
+// import { SearchParamProps } from '@/types';
 import Image from 'next/image';
 import { Calendar, MapPin } from 'lucide-react'; // Using icons from lucide-react
 
-const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) => {
+const EventDetails = async ({ params, searchParams }: any) => {
+  const {id}=params
   const event = await getEventById(id);
 
   return (
