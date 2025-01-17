@@ -13,9 +13,9 @@ interface IEvent extends Document {
   bookedSeats: number;
   eventType: 'online' | 'offline';
   qrCode?: string;
-  host: Schema.Types.ObjectId;
+  host: string;
   category: string,
-  attendees: Schema.Types.ObjectId[];
+  attendees: string[];
   createdAt: Date;
   hostEmail:string
 }
@@ -33,10 +33,10 @@ const eventSchema = new Schema({
   bookedSeats: { type: Number, default: 0 }, // Track booked seats
   eventType: { type: String, enum: ['online', 'offline'], required: true },
   qrCode: { type: String }, // Store QR code data or URL
-  host: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  host: {type:String, required :true },
   category: { type:String, enum:["meetup", "seminar", "workshop", "webinar", "exhibition","masterclass"]},
   // category: { type:String, required:true },
-  attendees: [{ type: Schema.Types.ObjectId, ref: 'User' }], // Users who have RSVPed
+  attendees: [{type:String}], // Users who have RSVPed
   createdAt: { type: Date, default: Date.now },
   hostEmail: {type: String, required: true}
 });

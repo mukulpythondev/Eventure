@@ -28,7 +28,7 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     if (!organizer) throw new Error("Organizer not found");
 
     // Create the event using the organizer's MongoDB _id
-    const newEvent = await Event.create({ ...event, host: organizer._id });
+    const newEvent = await Event.create({ ...event, host: userId });
     revalidatePath(path);
 
     return JSON.parse(JSON.stringify(newEvent));
@@ -173,5 +173,53 @@ export async function getRelatedEventsByCategory({
     return { data: JSON.parse(JSON.stringify(events)), totalPages: Math.ceil(eventsCount / limit) }
   } catch (error) {
     handleError(error)
+  }
+}
+
+export async function joinEvent(eventId: string, clerkId: string) {
+  try {
+    await dbConnect();
+
+    // Fetch the event by ID
+    const event = await Event.findById(eventId);
+    if (!event) throw new Error("Event not found");
+
+    // Fetch the user by clerkId
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new Error("User not found");
+
+    // Check if the user is the host
+    if (String(event.host) === String(clerkId)) {
+      throw new Error("Event host cannot join their own event");
+    }
+
+    // If the event is free, handle joining logic
+    if (!event.isPaid) {
+      // Check if the user has already joined
+      if (event.attendees.includes(user._id)) {
+        throw new Error("You have already joined this event");
+      }
+
+      // Add user to the event's attendees list
+      event.attendees.push(clerkId);
+      event.bookedSeats+=1;
+      await event.save();
+
+      // Check if the event is already in the user's RSVPs
+      if (user.rsvps.includes(eventId)) {
+        throw new Error("You have already RSVP'd to this event");
+      }
+
+      // Add event to the user's RSVPs
+      user.rsvps.push(eventId);
+      await user.save();
+
+      return { message: "Successfully joined the event!" };
+    }
+
+    // If the event is paid, return a message to buy a ticket
+    return { message: "Please purchase a ticket to join this event" };
+  } catch (error) {
+    handleError(error);
   }
 }

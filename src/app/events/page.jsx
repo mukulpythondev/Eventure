@@ -1,4 +1,4 @@
-"use client"; // Add this line to indicate this is client-side code
+"use client";
 
 import React, { useEffect, useState } from "react";
 import { Spotlight } from "@/components/ui/spotlight";
@@ -9,16 +9,19 @@ import { formatDateTime } from "@/lib/utils";
 const Page = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [allEvents, setAllEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]); // Store all events here
+  const [filteredEvents, setFilteredEvents] = useState([]); // Store filtered events here
   const [loading, setLoading] = useState(true); // State for loader
 
+  // Fetch all events once when component mounts
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         setLoading(true); // Show loader
-        const events = await getAllEvents({query:searchTerm,category:selectedCategory, page:1});
-        console.log(events)
-        setAllEvents(events.data || []); // Update events
+        const events = await getAllEvents({ query: "", category: "", page: 1 });
+        console.log(events);
+        setAllEvents(events.data || []); // Set all events
+        setFilteredEvents(events.data || []); // Initially, filtered events are all events
       } catch (error) {
         console.error("Error fetching events:", error);
       } finally {
@@ -28,13 +31,17 @@ const Page = () => {
     fetchEvents();
   }, []);
 
-  const filteredEvents = allEvents.filter((event) => {
-    return (
-      (event.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      event.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (selectedCategory ? event.category === selectedCategory : true)
-    );
-  });
+  // Apply search and category filters locally on all events
+  useEffect(() => {
+    const filtered = allEvents.filter((event) => {
+      return (
+        (event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        (selectedCategory ? event.category === selectedCategory.toLowerCase() : true)
+      );
+    });
+    setFilteredEvents(filtered); // Update filtered events
+  }, [searchTerm, selectedCategory, allEvents]); // Re-run the filter when searchTerm, selectedCategory, or allEvents change
 
   return (
     <div>
@@ -43,9 +50,8 @@ const Page = () => {
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="white" />
         <div className="p-4 max-w-7xl mx-auto relative z-10 w-full pt-20 md:pt-0">
           <h1 className="text-4xl md:text-6xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50">
-          Find, Attend, Enjoy.<br />
-            <span className="text-lg md:text-2xl text-gray-300"> Find what inspires you.
-            </span>
+            Find, Attend, Enjoy.<br />
+            <span className="text-lg md:text-2xl text-gray-300"> Find what inspires you.</span>
           </h1>
         </div>
       </div>
@@ -65,20 +71,36 @@ const Page = () => {
 
           <div className="flex space-x-4">
             <button
-              onClick={() => setSelectedCategory("Technology")}
+              onClick={() => setSelectedCategory("Workshop")}
               className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
-                selectedCategory === "Technology" ? "bg-cyan-700" : "bg-cyan-500"
+                selectedCategory === "Workshop" ? "bg-cyan-700" : "bg-cyan-500"
               }`}
             >
-              Technology
+              Workshop
             </button>
             <button
-              onClick={() => setSelectedCategory("Design")}
+              onClick={() => setSelectedCategory("Masterclass")}
               className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
-                selectedCategory === "Design" ? "bg-cyan-700" : "bg-cyan-500"
+                selectedCategory === "Masterclass" ? "bg-cyan-700" : "bg-cyan-500"
               }`}
             >
-              Design
+              Masterclass
+            </button>
+            <button
+              onClick={() => setSelectedCategory("Meetup")}
+              className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
+                selectedCategory === "Meetup" ? "bg-cyan-700" : "bg-cyan-500"
+              }`}
+            >
+              Meetup
+            </button>
+            <button
+              onClick={() => setSelectedCategory("Seminar")}
+              className={`px-4 py-2 rounded-md text-white bg-cyan-500 ${
+                selectedCategory === "Seminar" ? "bg-cyan-700" : "bg-cyan-500"
+              }`}
+            >
+              Seminar
             </button>
             <button
               onClick={() => setSelectedCategory("")}
