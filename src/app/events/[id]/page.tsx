@@ -2,32 +2,34 @@ import { getEventById } from '@/lib/actions/events.action';
 import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
 import { Calendar, MapPin } from 'lucide-react';
-import { auth } from '@clerk/nextjs/server'
+import { auth } from "@clerk/nextjs/server";
+import EventDetailsClient from '@/components/shared/EventDetailsClient';
+
 const EventDetails = async ({ params, searchParams }: any) => {
   const { id } = await params;
+  const { userId } = await auth();
+
+  if (!userId) {
+    console.error('User ID is null');
+    return <div>User ID is null</div>;
+  }
+
   const event = await getEventById(id);
 
-  // Simulating userId (replace with actual user data when available)
-  const { userId } = await auth();
+  if (!event) {
+    console.error('Event not found');
+    return <div>Event not found</div>;
+  }
+
+  // Check if the user is registered, and if they are the host
   const isRegistered = userId ? event.attendees.includes(userId) : false;
-  const isHost = userId === event.host;
+  const isHost = userId === event.host._id;
 
   const eventStartDate = new Date(event.startDateTime);
   const today = new Date();
   const oneDayBeforeStart = new Date(eventStartDate);
   oneDayBeforeStart.setDate(eventStartDate.getDate() - 1);
   const canRegister = today <= oneDayBeforeStart;
-
-  const handleJoinEvent = () => {
-    console.log('Joining event:', event._id);
-    // Add join event logic here
-  };
-
-  
-    // console.log('User ID:', userId);
-    // console.log('Event host:', event.host);
-    // console.log('Can Register:', canRegister);
-    // console.log(isHost)
 
   return (
     <>
@@ -81,28 +83,13 @@ const EventDetails = async ({ params, searchParams }: any) => {
               </a>
             </div>
 
-            <div>
-              {!isRegistered && canRegister && !isHost && (
-                <button
-                  onClick={handleJoinEvent}
-                  className="mt-2 py-1 px-3 bg-blue-500 text-white text-sm font-semibold rounded hover:bg-blue-600 transition"
-                >
-                  Join Event
-                </button>
-              )}
-
-              {isRegistered && (
-                <p className="mt-2 text-green-500 font-medium text-sm">Registered</p>
-              )}
-
-              {isHost && (
-                <p className="mt-2 text-orange-500 font-medium text-sm">You are the Host</p>
-              )}
-
-              {!canRegister && !isRegistered && !isHost && (
-                <p className="mt-2 text-red-500 font-medium text-lg ">Registration Closed</p>
-              )}
-            </div>
+            <EventDetailsClient
+              event={event}
+              userId={userId}
+              isRegistered={isRegistered}
+              isHost={isHost}
+              canRegister={canRegister}
+            />
           </div>
         </div>
       </section>

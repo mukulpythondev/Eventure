@@ -14,6 +14,7 @@ import {
 import { dbConnect } from "../database/db";
 import Event from "../models/eventModel";
 import User from "../models/userModel";
+import mongoose from "mongoose";
 
 const populateEvent = (query: any) =>
   query.populate({ path: "host", model: User, select: "_id firstName lastName" });
@@ -40,6 +41,9 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 // GET ONE EVENT BY ID
 export async function getEventById(eventId: string) {
   try {
+    if (!mongoose.isValidObjectId(eventId)) {
+      throw new Error("Invalid event ID");
+    }
     await dbConnect();
 
     const event = await populateEvent(Event.findById(eventId));
