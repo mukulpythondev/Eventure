@@ -1,4 +1,4 @@
-import { model, models, Schema } from "mongoose";
+import mongoose, { model, models, Schema } from "mongoose";
 interface IEvent extends Document {
   _id:string,
   title: string;
@@ -13,7 +13,7 @@ interface IEvent extends Document {
   bookedSeats: number;
   eventType: 'online' | 'offline';
   qrCode?: string;
-  host: string;
+  host: mongoose.Types.ObjectId; // Changed to ObjectId
   category: string,
   attendees: string[];
   createdAt: Date;
@@ -33,7 +33,7 @@ const eventSchema = new Schema({
   bookedSeats: { type: Number, default: 0 }, // Track booked seats
   eventType: { type: String, enum: ['online', 'offline'], required: true },
   qrCode: { type: String }, // Store QR code data or URL
-  host: {type:String, required :true },
+  host: { type: Schema.Types.ObjectId, ref: "User", required: true }, // Reference to User
   category: { type:String, enum:["meetup", "seminar", "workshop", "webinar", "exhibition","masterclass"]},
   // category: { type:String, required:true },
   attendees: [{type:String}], // Users who have RSVPed

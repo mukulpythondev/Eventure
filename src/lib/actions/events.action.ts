@@ -14,7 +14,6 @@ import {
 import { dbConnect } from "../database/db";
 import Event from "../models/eventModel";
 import User from "../models/userModel";
-import mongoose from "mongoose";
 
 const populateEvent = (query: any) =>
   query.populate({ path: "host", model: User, select: "_id firstName lastName" });
@@ -29,7 +28,9 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
     if (!organizer) throw new Error("Organizer not found");
 
     // Create the event using the organizer's MongoDB _id
-    const newEvent = await Event.create({ ...event, host: userId });
+    const newEvent = await Event.create({ ...event, host: organizer._id });
+    organizer.hostedEvents.push(newEvent._id)
+    organizer.save();
     revalidatePath(path);
 
     return JSON.parse(JSON.stringify(newEvent));
@@ -41,9 +42,6 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
 // GET ONE EVENT BY ID
 export async function getEventById(eventId: string) {
   try {
-    if (!mongoose.isValidObjectId(eventId)) {
-      throw new Error("Invalid event ID");
-    }
     await dbConnect();
 
     const event = await populateEvent(Event.findById(eventId));
@@ -179,13 +177,21 @@ export async function getRelatedEventsByCategory({
     handleError(error)
   }
 }
-
+export const getUserByClerkId = async (clerkId: string) => {
+  try {
+    return await User.findOne({ clerkId });
+  } catch (error) {
+    console.error('Error fetching user by Clerk ID:', error);
+    throw new Error('Error fetching user');
+  }
+};
 export async function joinEvent(eventId: string, clerkId: string) {
   try {
     await dbConnect();
 
     // Fetch the event by ID
-    const event = await Event.findById(eventId);
+    const event= await Event.findById(eventId)
+    const eventPopulated = await populateEvent(event);
     if (!event) throw new Error("Event not found");
 
     // Fetch the user by clerkId
@@ -193,7 +199,7 @@ export async function joinEvent(eventId: string, clerkId: string) {
     if (!user) throw new Error("User not found");
 
     // Check if the user is the host
-    if (String(event.host) === String(clerkId)) {
+    if (String(eventPopulated.host._id) === String(user._id)) {
       throw new Error("Event host cannot join their own event");
     }
 
@@ -226,4 +232,4 @@ export async function joinEvent(eventId: string, clerkId: string) {
   } catch (error) {
     handleError(error);
   }
-}
+} 

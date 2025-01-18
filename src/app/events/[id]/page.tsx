@@ -1,4 +1,4 @@
-import { getEventById } from '@/lib/actions/events.action';
+import { getEventById, getUserByClerkId } from '@/lib/actions/events.action';
 import { formatDateTime } from '@/lib/utils';
 import Image from 'next/image';
 import { Calendar, MapPin } from 'lucide-react';
@@ -7,24 +7,29 @@ import EventDetailsClient from '@/components/shared/EventDetailsClient';
 
 const EventDetails = async ({ params, searchParams }: any) => {
   const { id } = await params;
-  const { userId } = await auth();
+  const { userId: clerkUserId } = await auth();
 
-  if (!userId) {
-    console.error('User ID is null');
-    return <div>User ID is null</div>;
+  if (!clerkUserId) {
+    console.error('User is not authenticated');
+    return <div>User is not authenticated</div>;
+  }
+
+  // Fetch user details using Clerk ID
+  const user = await getUserByClerkId(clerkUserId);
+  if (!user) {
+    console.error('User not found in the database');
+    return <div>User not found</div>;
   }
 
   const event = await getEventById(id);
-
   if (!event) {
     console.error('Event not found');
     return <div>Event not found</div>;
   }
 
-  // Check if the user is registered, and if they are the host
-  const isRegistered = userId ? event.attendees.includes(userId) : false;
-  const isHost = userId === event.host._id;
-
+  // Check if the user is registered and if they are the host
+  const isRegistered = event.attendees.includes(clerkUserId);
+  const isHost = user._id.toString() === event.host._id.toString();
   const eventStartDate = new Date(event.startDateTime);
   const today = new Date();
   const oneDayBeforeStart = new Date(eventStartDate);
@@ -85,7 +90,7 @@ const EventDetails = async ({ params, searchParams }: any) => {
 
             <EventDetailsClient
               event={event}
-              userId={userId}
+              clerkId={clerkUserId}
               isRegistered={isRegistered}
               isHost={isHost}
               canRegister={canRegister}
