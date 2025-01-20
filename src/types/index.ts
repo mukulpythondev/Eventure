@@ -33,16 +33,16 @@ export type CreateUserParams = {
   export type UpdateEventParams = {
     userId: string
     event: {
-      _id:string
+      _id?:string
       title: string
       description: string
-      location: string
+      venue: string
       eventImage: string
       startDateTime: Date
       endDateTime: Date
       category: string
-      price: number
-      isPaid: boolean
+      price?: number
+      isPaid?: boolean
       hostEmail: string
       totalSeats: number
 

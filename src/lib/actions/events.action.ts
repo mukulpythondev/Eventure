@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { handleError } from "@/lib/utils";
-
+import QRCode from 'qrcode'; 
 import {
   CreateEventParams,
   UpdateEventParams,
@@ -14,6 +14,7 @@ import {
 import { dbConnect } from "../database/db";
 import Event from "../models/eventModel";
 import User from "../models/userModel";
+import {sendEmail} from "@/lib/sendEmail";
 
 const populateEvent = (query: any) =>
   query.populate({ path: "host", model: User, select: "_id firstName lastName" });
@@ -190,7 +191,7 @@ export async function joinEvent(eventId: string, clerkId: string) {
     await dbConnect();
 
     // Fetch the event by ID
-    const event= await Event.findById(eventId)
+    const event = await Event.findById(eventId);
     const eventPopulated = await populateEvent(event);
     if (!event) throw new Error("Event not found");
 
@@ -212,7 +213,7 @@ export async function joinEvent(eventId: string, clerkId: string) {
 
       // Add user to the event's attendees list
       event.attendees.push(clerkId);
-      event.bookedSeats+=1;
+      event.bookedSeats += 1;
       await event.save();
 
       // Check if the event is already in the user's RSVPs
@@ -224,12 +225,40 @@ export async function joinEvent(eventId: string, clerkId: string) {
       user.rsvps.push(eventId);
       await user.save();
 
-      return { message: "Successfully joined the event!" };
+      // Step 1: Generate the QR code for attendance
+      const qrCodeData = JSON.stringify({ eventId, clerkId });
+      const qrCodeDataUrl = await QRCode.toDataURL(qrCodeData);
+      console.log(qrCodeData,qrCodeDataUrl)
+      // Step 2: Create dynamic HTML content for the email
+      const htmlContent = `
+        <h2>Event Registration Successful!</h2>
+        <p>Thank you for registering for the event: <strong>${event.title}</strong>.</p>
+        <p>Your event details are below:</p>
+        <ul>
+          <li><strong>Event ID:</strong> ${eventId}</li>
+          <li><strong>Event Name:</strong> ${event.title}</li>
+          <li><strong>Event Date:</strong> ${event.startDateTime.toDateString()}</li>
+          <li><strong>Location:</strong> ${event.venue}</li>
+        </ul>
+        <p><strong>Your Attendance QR Code:</strong></p>
+        <img src="${qrCodeDataUrl}" alt="QR Code for Attendance" />
+        <p>Scan this QR code at the event venue to mark your attendance.</p>
+      `;
+
+      // Step 3: Send the email with the QR code
+      await sendEmail({
+        to: user.email, // Send to user's email
+        subject: `Your Registration for ${event.title}`,
+        htmlContent, // Email content with the QR code
+      });
+
+      return { message: "Successfully joined the event! A confirmation email with QR code has been sent." };
     }
 
     // If the event is paid, return a message to buy a ticket
     return { message: "Please purchase a ticket to join this event" };
   } catch (error) {
-    handleError(error);
+    console.error(error);
+    throw new Error('An error occurred while joining the event');
   }
-} 
+}

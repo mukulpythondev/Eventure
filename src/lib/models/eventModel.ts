@@ -16,6 +16,7 @@ interface IEvent extends Document {
   host: mongoose.Types.ObjectId; // Changed to ObjectId
   category: string,
   attendees: string[];
+  attendance: string[];
   createdAt: Date;
   hostEmail:string
 }
@@ -37,6 +38,7 @@ const eventSchema = new Schema({
   category: { type:String, enum:["meetup", "seminar", "workshop", "webinar", "exhibition","masterclass"]},
   // category: { type:String, required:true },
   attendees: [{type:String}], // Users who have RSVPed
+  attendance: [{type:String}], // Users who have Check
   createdAt: { type: Date, default: Date.now },
   hostEmail: {type: String, required: true}
 });

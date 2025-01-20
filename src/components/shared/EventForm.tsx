@@ -10,13 +10,13 @@ import { cn } from "@/lib/utils";
 import { eventSchema } from "@/lib/validator";
 import { CldUploadButton } from 'next-cloudinary';
 import { XIcon } from "lucide-react";
-import { createEvent } from "@/lib/actions/events.action";
-import { useRouter } from "next/navigation";
+import { createEvent, updateEvent } from "@/lib/actions/events.action";
+import { useParams, useRouter } from "next/navigation";
 type EventFormProps = {
   userId: string;
   type: "Create" | "Update";
 };
-
+type EventDataWithId = EventFormValues & { _id: string };
 // Type Inference for Form Values
 type EventFormValues = z.infer<typeof eventSchema>;
 type CloudinaryUploadResult = {
@@ -27,6 +27,8 @@ type CloudinaryUploadResult = {
 };
 export function EventForm({ userId, type }: EventFormProps) {
   const [isPaid, setIsPaid] = useState(false);
+  const params = useParams();
+  const id = typeof params?.id === "string" ? params.id : ""; 
   const [eventType, setEventType] = useState("online");
   const [image, setImage] = useState<{ url: string; name: string } | null>(null);
   const EVENT_TYPES = ["meetup", "hackathon", "seminar", "workshop", "masterclass"];
@@ -51,37 +53,57 @@ export function EventForm({ userId, type }: EventFormProps) {
       totalSeats: 0,
       eventType: "online",
       hostEmail: "",
-      category:""
-    },
+      category:""    },
   });
 
   const onSubmit = async (data: EventFormValues) => {
     console.log("Event data:", data);
-    if(type=="Create")
-    {
-      try {
-        const eventData = {
-          ...data,
-          startDateTime: new Date(data.startDateTime),
-          endDateTime: new Date(data.endDateTime),
-        };
-        const newEvent= await createEvent({
-          event:eventData,
+  
+    try {
+      // Prepare the event data with formatted dates
+      const eventData = {
+        ...data,
+        startDateTime: new Date(data.startDateTime),
+        endDateTime: new Date(data.endDateTime),
+      };
+  
+      if (type === "Create") {
+        // Create event logic
+        const newEvent = await createEvent({
+          event: eventData,
           userId,
-          path:'/profile'
-        })
-        if(newEvent)
-        {
-          console.log(newEvent)
+          path: '/profile',
+        });
+  
+        if (newEvent) {
+          console.log("Event created:", newEvent);
           reset();
-          router.push(`/events/${newEvent._id}`)
+          router.push(`/events/${newEvent._id}`);
         }
-      } catch (error) {
-        console.log(error)
+      } else if (type === "Update") {
+        // Update event logic
+        const eventDatawithid = {
+          eventData,
+          _id:id
+        }
+        
+        const updatedEvent = await updateEvent({
+          event: eventData,
+          userId,
+          path: `/events/${id}`, // Path to revalidate
+        });
+  
+        if (updatedEvent) {
+          console.log("Event updated:", updatedEvent);
+          reset();
+          router.push(`/events/${updatedEvent._id}`); // Redirect to the updated event page
+        }
       }
+    } catch (error) {
+      console.error("Error handling form submission:", error);
     }
-    // Add your API call logic here
   };
+  
 
   return (
     <div className="max-w-lg w-full mx-auto rounded-md p-6 shadow-input bg-black text-neutral-200">
