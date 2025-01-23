@@ -8,6 +8,7 @@ const userSchema = new Schema({
   clerkId: { type: String, required: true, unique:true },
   // userName: { type: String, required: true, unique:true },
   rsvps: [{ type: Schema.Types.ObjectId, ref: 'Event' }], // Events the user has RSVPed to
+  attendedEvents: [{ type: Schema.Types.ObjectId, ref: 'Event' }], // Events the user has RSVPed to
   hostedEvents: [{ type: Schema.Types.ObjectId, ref: 'Event' }], // Events hosted by the user
 }, {
   timestamps:true

@@ -15,6 +15,8 @@ import { dbConnect } from "../database/db";
 import Event from "../models/eventModel";
 import User from "../models/userModel";
 import {sendEmail} from "@/lib/sendEmail";
+import { uploadToS3 } from "../uploadS3";
+import { HttpError } from '@/lib/utils'; 
 
 const populateEvent = (query: any) =>
   query.populate({ path: "host", model: User, select: "_id firstName lastName" });
@@ -180,7 +182,11 @@ export async function getRelatedEventsByCategory({
 }
 export const getUserByClerkId = async (clerkId: string) => {
   try {
-    return await User.findOne({ clerkId });
+   await dbConnect();
+   const user=await User.findOne({ clerkId }).populate('rsvps')
+   .populate('attendedEvents')
+   .populate('hostedEvents');
+    return JSON.parse(JSON.stringify(user));
   } catch (error) {
     console.error('Error fetching user by Clerk ID:', error);
     throw new Error('Error fetching user');
@@ -228,7 +234,7 @@ export async function joinEvent(eventId: string, clerkId: string) {
       // Step 1: Generate the QR code for attendance
       const qrCodeData = JSON.stringify({ eventId, clerkId });
       const qrCodeDataUrl = await QRCode.toDataURL(qrCodeData);
-      console.log(qrCodeData,qrCodeDataUrl)
+      const qrUrl= await uploadToS3(qrCodeDataUrl,"eventQR")
       // Step 2: Create dynamic HTML content for the email
       const htmlContent = `
         <h2>Event Registration Successful!</h2>
@@ -241,7 +247,7 @@ export async function joinEvent(eventId: string, clerkId: string) {
           <li><strong>Location:</strong> ${event.venue}</li>
         </ul>
         <p><strong>Your Attendance QR Code:</strong></p>
-        <img src="${qrCodeDataUrl}" alt="QR Code for Attendance" />
+        <img src="${qrUrl}" alt="QR Code for Attendance" />
         <p>Scan this QR code at the event venue to mark your attendance.</p>
       `;
 
@@ -262,3 +268,43 @@ export async function joinEvent(eventId: string, clerkId: string) {
     throw new Error('An error occurred while joining the event');
   }
 }
+export async function attendanceAction(eventId: string, clerkId: string) {
+  try {
+    await dbConnect();
+
+    // Fetch the event by ID
+    const event = await Event.findById(eventId);
+    if (!event) throw new HttpError(404, "Event not found");
+
+    // Fetch the user by clerkId
+    const user = await User.findOne({ clerkId });
+    if (!user) throw new HttpError(404, "User not found");
+
+    // Check if the user is the host
+    if (String(event.host._id) === String(user._id)) {
+      throw new HttpError(403, "Event host cannot attend their own event");
+    }
+
+    // Check if the user is already attending the event
+    if (event.attendance.includes(clerkId)) {
+      throw new HttpError(409, "You have already marked your attendance for this event");
+    }
+
+    // Add the user to the event's attendees list
+    event.attendance.push(clerkId);
+    await event.save();
+
+    // Add the event to the user's attendedEvents list
+    user.attendedEvents.push(eventId);
+    await user.save();
+
+    return { message: "Attendance recorded successfully." };
+  } catch (error: any) {
+    console.error("Error recording attendance:", error);
+
+    // Re-throw custom HTTP errors, or wrap other errors
+    if (error instanceof HttpError) throw error;
+    throw new HttpError(500, "An error occurred while recording attendance");
+  }
+}
+

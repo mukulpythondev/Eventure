@@ -45,7 +45,13 @@ const Header = () => {
           <span className="font-semibold text-lg">Explore Events</span>
           <MoveUpRight className="font-semibold" size={20} />
         </Link>
-
+        <Link
+          href="/my-events"
+          className="flex items-center gap-1 text-gray-200 hover:text-cyan-300 transition-all duration-200"
+          onClick={() => setMenuOpen(false)} // Close menu on link click
+        >
+          <span className="font-semibold text-lg">My Events</span>
+        </Link>  
         {isSignedIn ? (
           // If user is signed in, show Profile link and Sign Out button
           <div className="flex flex-col sm:flex-row items-center gap-6 space-y-4 sm:space-y-0">
